@@ -207,24 +207,10 @@ const DicomViewer = () => {
     }
   };
 
-  // Navegación entre imágenes
-  const nextImage = () => setCurrentImageIndex((prev) => Math.min(prev + 1, images.length - 1));
-  const prevImage = () => setCurrentImageIndex((prev) => Math.max(prev - 1, 0));
-
   // Controles de brillo, contraste e inversión
   const invertColors = () => {
     setInverted((prev) => !prev);
     updateViewport();
-  };
-  const setToBlackAndWhite = () => {
-    const element = divRef.current;
-    if (element) {
-      const viewport = cornerstone.getViewport(element);
-      if (viewport) {
-        viewport.color = false;
-        cornerstone.setViewport(element, viewport);
-      }
-    }
   };
 
   const handleBrightnessChange = (event) => {
@@ -310,7 +296,7 @@ const DicomViewer = () => {
       <div
         className="viewport"
         ref={divRef}
-        style={{  overflow: 'hidden',width: '100%', height: '80vh', position: 'relative' }}
+        style={{ overflow: 'hidden', width: '100%', height: '80vh', position: 'relative', maxWidth: '700px', maxHeight: '700px' }}
         tabIndex={0}
       >
         <div className="progress-bar-container">
@@ -327,10 +313,9 @@ const DicomViewer = () => {
           onChange={handleProgressChange}
           style={{ width: '100%' }}
         />
-        
       </div>
       <div className="image-header-info" style={{ color: '#fff' }}>
-      <h2>Información de la Cabecera:</h2>
+        <h2>Información de la Cabecera:</h2>
         <ul>
           <li>Nombre del Paciente: {imageHeaderInfo.patientName || 'N/A'}</li>
           <li>ID del Paciente: {imageHeaderInfo.patientID || 'N/A'}</li>
@@ -355,7 +340,6 @@ const DicomViewer = () => {
       </div>
     </div>
   );
-  
 };
 
 export default DicomViewer;
