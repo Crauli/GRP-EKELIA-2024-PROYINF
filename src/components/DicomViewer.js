@@ -23,13 +23,10 @@ const DicomViewer = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imageHeaderInfo, setImageHeaderInfo] = useState({});
   const imageCache = useRef({});
-
-  // Nuevo estado para el arrastre
   const [isDragging, setIsDragging] = useState(false);
   const [startPoint, setStartPoint] = useState(null);
 
-  // Activar el visor cuando el componente está montado
-   useEffect(() => {
+  useEffect(() => {
     const element = divRef.current;
     if (element) {
       cornerstone.enable(element);
@@ -47,7 +44,6 @@ const DicomViewer = () => {
     };
   }, []);
 
-  // Cargar imagen cuando cambia el índice
   useEffect(() => {
     if (images.length > 0) {
       loadImage(images[currentImageIndex]);
@@ -55,31 +51,27 @@ const DicomViewer = () => {
     }
   }, [currentImageIndex, images]);
 
-  // Manejador de rueda del mouse para hacer zoom
   const handleWheel = (event) => {
-    event.preventDefault(); // Prevenir el comportamiento de desplazamiento por defecto
+    event.preventDefault();
     const element = divRef.current;
     if (element) {
       const viewport = cornerstone.getViewport(element);
-      const scaleChange = event.deltaY > 0 ? 0.9 : 1.1; // Cambia el zoom, ajusta según lo necesites
-      viewport.scale *= scaleChange; // Ajustar el zoom
+      const scaleChange = event.deltaY > 0 ? 0.9 : 1.1;
+      viewport.scale *= scaleChange;
       cornerstone.setViewport(element, viewport);
     }
   };
-  
-  // Manejador para el inicio del arrastre
+
   const handleMouseDown = (event) => {
     setIsDragging(true);
     setStartPoint({ x: event.clientX, y: event.clientY });
   };
 
-  // Manejador para la finalización del arrastre
   const handleMouseUp = () => {
     setIsDragging(false);
     setStartPoint(null);
   };
 
-  // Manejador para el movimiento del mouse
   const handleMouseMove = (event) => {
     if (isDragging && startPoint) {
       const element = divRef.current;
@@ -90,12 +82,11 @@ const DicomViewer = () => {
         viewport.translation.x += dx;
         viewport.translation.y += dy;
         cornerstone.setViewport(element, viewport);
-        setStartPoint({ x: event.clientX, y: event.clientY }); // Actualizar el punto de inicio
+        setStartPoint({ x: event.clientX, y: event.clientY });
       }
     }
   };
 
-  // Precargar imágenes adyacentes
   const prefetchAdjacentImages = () => {
     prefetchImage(currentImageIndex + 1);
     prefetchImage(currentImageIndex - 1);
@@ -112,7 +103,6 @@ const DicomViewer = () => {
     }
   };
 
-  // Manejador para carga de archivos ZIP
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -125,8 +115,7 @@ const DicomViewer = () => {
       }
     }
   };
-  
-  // Procesar archivo ZIP y extraer imágenes DICOM válidas
+
   const processZipFile = async (file) => {
     const zip = new JSZip();
     const zipContent = await file.arrayBuffer();
@@ -152,7 +141,6 @@ const DicomViewer = () => {
       .filter(Boolean);
   };
 
-  // Cargar imagen en el visor
   const loadImage = async (imageId) => {
     try {
       const image = imageCache.current[imageId] || await cornerstone.loadImage(imageId);
@@ -164,10 +152,9 @@ const DicomViewer = () => {
     }
   };
 
-  // Extraer información de la cabecera de la imagen DICOM
   const extractImageHeaderInfo = (imageId) => {
     const image = imageCache.current[imageId];
-    if (image && image.data) {
+    if (image?.data) {
       const { data } = image;
       const headerInfo = {
         patientName: data.string('x00100010'),
@@ -194,7 +181,6 @@ const DicomViewer = () => {
     }
   };
 
-  // Mostrar imagen en el visor
   const displayImage = (image) => {
     const element = divRef.current;
     if (element) {
@@ -207,7 +193,6 @@ const DicomViewer = () => {
     }
   };
 
-  // Controles de brillo, contraste e inversión
   const invertColors = () => {
     setInverted((prev) => !prev);
     updateViewport();
@@ -236,14 +221,11 @@ const DicomViewer = () => {
     }
   };
 
-  // Alternar visibilidad de controles
   const toggleBrightnessContrastControls = () => setShowBrightnessContrastControls((prev) => !prev);
 
-  // Calcular la posición de la barra de progreso
-  const progressBarHeight = '20px'; // Alto fijo
-  const progressBarTop = `${(currentImageIndex / (images.length - 1)) * 100}%`; // Cambia a 100% basado en el índice
+  const progressBarHeight = '20px';
+  const progressBarTop = `${(currentImageIndex / (images.length - 1)) * 100}%`;
 
-  // Manejador para la barra de progreso
   const handleProgressChange = (event) => {
     const newIndex = parseInt(event.target.value, 10);
     setCurrentImageIndex(newIndex);
@@ -260,12 +242,23 @@ const DicomViewer = () => {
     <div className="container">
       <div className="sidebar">
         <h1>Visor DICOM</h1>
+        
+        {/* File Upload Section */}
         <label htmlFor="file-upload" className="custom-file-upload">
           Subir Archivo ZIP
         </label>
-        <input id="file-upload" type="file" accept=".zip" onChange={handleFileChange} />
+        <input 
+          id="file-upload" 
+          type="file" 
+          accept=".zip" 
+          onChange={handleFileChange} 
+        />
+        
+        {/* Buttons for Actions */}
         <button onClick={invertColors}>Invertir Colores</button>
         <button onClick={toggleBrightnessContrastControls}>Brillo / Contraste</button>
+  
+        {/* Brightness and Contrast Controls */}
         {showBrightnessContrastControls && (
           <div className="control-panel">
             <label>
@@ -291,20 +284,33 @@ const DicomViewer = () => {
             </label>
           </div>
         )}
+        
+        {/* Reset Button */}
         <button onClick={resetValues} className="default-button">Default</button>
       </div>
+  
+      {/* DICOM Viewer Section */}
       <div
         className="viewport"
         ref={divRef}
-        style={{ overflow: 'hidden', width: '100%', height: '80vh', position: 'relative', maxWidth: '700px', maxHeight: '700px' }}
-        tabIndex={0}
+        style={{
+          overflow: 'hidden',
+          width: '100%',
+          height: '80vh',
+          position: 'relative',
+          maxWidth: '700px',
+          maxHeight: '700px',
+        }}
+        role="region"
       >
+        {/* Progress Bar */}
         <div className="progress-bar-container">
           <div
             className="progress-bar"
             style={{ height: progressBarHeight, top: progressBarTop }}
           />
         </div>
+        {/* Image Index Slider */}
         <input
           type="range"
           min="0"
@@ -314,6 +320,8 @@ const DicomViewer = () => {
           style={{ width: '100%' }}
         />
       </div>
+  
+      {/* Image Header Info Section */}
       <div className="image-header-info" style={{ color: '#fff' }}>
         <h2>Información de la Cabecera:</h2>
         <ul>
@@ -340,6 +348,6 @@ const DicomViewer = () => {
       </div>
     </div>
   );
-};
+}  
 
 export default DicomViewer;
